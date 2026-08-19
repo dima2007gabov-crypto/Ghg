@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🍕 КИБЕРПИЦЦА - МЕМ</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body {
+            min-height:100vh; background:#0a0a1a; display:flex; justify-content:center; align-items:center;
+            font-family:'Segoe UI',system-ui,monospace; padding:16px; overflow:hidden; position:relative;
+            transition:background 0.5s;
+        }
+        body.final {
+            background: radial-gradient(circle, #facc15 0%, #f59e0b 50%, #b45309 100%);
+        }
+        .stars { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+        .star { position:absolute; background:#fff; border-radius:50%; animation:twinkle var(--dur) ease-in-out infinite alternate; opacity:0.3; }
+        @keyframes twinkle { 0%{opacity:0.1;transform:scale(0.8);} 100%{opacity:0.9;transform:scale(1.2);} }
+
+        .game {
+            position:relative; z-index:1; background:rgba(10,10,30,0.8); backdrop-filter:blur(8px);
+            border-radius:56px; padding:24px 20px 34px; max-width:480px; width:100%;
+            box-shadow:0 0 40px #8b5cf6aa,0 0 80px #3b82f644; border:1px solid rgba(139,92,246,0.3);
+            text-align:center; transition:all 0.5s;
+        }
+        .game.final {
+            background: rgba(255,215,0,0.15);
+            border-color: #facc15;
+            box-shadow: 0 0 60px #facc15, 0 0 120px #f59e0b;
+        }
+        h1 { color:#c084fc; font-size:2rem; text-shadow:0 0 20px #a855f7,0 0 60px #7c3aed; letter-spacing:3px; font-weight:900; transition:0.3s; }
+        h1.final { color:#facc15; text-shadow:0 0 40px #f59e0b,0 0 80px #fbbf24; }
+        .score-box {
+            background:rgba(0,0,0,0.6); border-radius:60px; padding:8px 16px; margin:6px 0 16px;
+            border:1px solid #a855f766; box-shadow:0 0 30px #7c3aed44;
+        }
+        .score { font-size:3.6rem; font-weight:900; color:#e0e7ff; text-shadow:0 0 20px #818cf8,0 0 60px #6366f1; line-height:1.2; transition:transform 0.1s; }
+        .score.pop { transform:scale(1.25); }
+
+        .pizza-wrapper {
+            position:relative; width:220px; height:220px; margin:6px auto 18px; cursor:pointer;
+            touch-action:manipulation; transition:transform 0.1s, filter 0.5s;
+            filter:drop-shadow(0 0 20px #a855f766);
+        }
+        .pizza-wrapper:active { transform:scale(0.92); }
+        .pizza-wrapper svg { width:100%; height:100%; display:block; transition:all 0.3s ease; }
+        .pizza-wrapper.final-skin {
+            filter: drop-shadow(0 0 60px #facc15) drop-shadow(0 0 120px #f59e0b);
+            animation: glowPulse 1.5s infinite;
+        }
+        @keyframes glowPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 40px #facc15) drop-shadow(0 0 80px #f59e0b); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 80px #fbbf24) drop-shadow(0 0 160px #f59e0b); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 40px #facc15) drop-shadow(0 0 80px #f59e0b); }
+        }
+        .pizza-wrapper.auto-tap {
+            animation: autoTapPulse 0.3s ease-in-out infinite alternate;
+        }
+        @keyframes autoTapPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(0.93); }
+        }
+
+        .upgrade-pizza-btn {
+            background:linear-gradient(135deg,#facc15,#f59e0b); border:none; border-radius:60px;
+            padding:10px 20px; font-weight:900; font-size:1.1rem; color:#1a0b2e;
+            box-shadow:0 4px 0 #b45309,0 0 30px #facc1566; transition:0.1s;
+            cursor:pointer; border:1px solid #ffe484; touch-action:manipulation;
+            margin:6px auto 12px; display:inline-flex; align-items:center; gap:8px;
+        }
+        .upgrade-pizza-btn:active { transform:translateY(4px); box-shadow:0 0px 0 #b45309; }
+        .upgrade-pizza-btn:disabled { opacity:0.4; transform:translateY(2px); box-shadow:0 2px 0 #b45309; pointer-events:none; }
+        .upgrade-pizza-btn.final-btn {
+            background:linear-gradient(135deg,#ffd700,#ffaa00);
+            box-shadow:0 0 40px #ffd700;
+            color:#000;
+        }
+
+        .stats {
+            display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;
+            background:rgba(0,0,0,0.4); border-radius:40px; padding:8px 10px; margin:10px 0 14px;
+            color:#b9b9d6; font-size:0.75rem; border:1px solid #4b556355;
+        }
+        .stats span { font-weight:700; color:#a78bfa; }
+
+        .upgrades {
+            display:flex; flex-direction:column; gap:8px; margin:6px 0 12px;
+            max-height:230px; overflow-y:auto; padding-right:4px;
+        }
+        .upgrades::-webkit-scrollbar { width:4px; }
+        .upgrades::-webkit-scrollbar-track { background:transparent; }
+        .upgrades::-webkit-scrollbar-thumb { background:#7c3aed66; border-radius:10px; }
+
+        .upgrade {
+            background:rgba(20,10,40,0.7); border-radius:40px; padding:10px 14px;
+            display:flex; align-items:center; justify-content:space-between;
+            border:1px solid #7c3aed44; transition:0.15s;
+        }
+        .upgrade:hover { background:rgba(30,20,60,0.8); }
+        .upgrade-info { text-align:left; color:#ddd; }
+        .upgrade-name { font-weight:700; font-size:0.9rem; }
+        .upgrade-desc { font-size:0.6rem; opacity:0.7; }
+        .upgrade-cost {
+            background:#1e1b3a; padding:3px 12px; border-radius:40px; font-weight:700;
+            color:#c084fc; border:1px solid #7c3aed66; font-size:0.75rem;
+        }
+        .upgrade-btn {
+            background:#7c3aed; border:none; border-radius:40px; padding:5px 14px;
+            font-weight:800; color:#fff; font-size:0.75rem; cursor:pointer;
+            box-shadow:0 3px 0 #4c1d95; transition:0.08s linear; border:1px solid #a78bfa;
+            touch-action:manipulation;
+        }
+        .upgrade-btn:active { transform:translateY(3px); box-shadow:0 0px 0 #4c1d95; }
+        .upgrade-btn:disabled { opacity:0.4; transform:translateY(2px); box-shadow:0 1px 0 #4c1d95; pointer-events:none; }
+        .reset-btn {
+            background:transparent; border:1px solid #ef444466; color:#fca5a5;
+            padding:6px 16px; border-radius:30px; font-size:0.75rem; cursor:pointer; transition:0.2s; margin-top:4px;
+        }
+        .reset-btn:hover { background:#ef444422; border-color:#ef444488; }
+
+        .toast {
+            position:fixed; top:20px; left:50%; transform:translateX(-50%);
+            background:#1e1b3acc; backdrop-filter:blur(8px); color:#c084fc;
+            padding:10px 24px; border-radius:50px; border:1px solid #a855f766;
+            box-shadow:0 0 40px #7c3aed66; font-weight:700; font-size:1rem; z-index:1000;
+            animation:toastIn 0.4s ease; pointer-events:none;
+        }
+        @keyframes toastIn { 0%{opacity:0;transform:translateX(-50%) translateY(-30px) scale(0.8);} 100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);} }
+        .toast.hide { animation:toastOut 0.4s ease forwards; }
+        @keyframes toastOut { 0%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);} 100%{opacity:0;transform:translateX(-50%) translateY(-40px) scale(0.8);} }
+
+        .pizza-float {
+            position:fixed; pointer-events:none; z-index:999; font-size:2rem; font-weight:900;
+            color:#facc15; text-shadow:0 0 20px #f59e0b,0 4px 0 #a16207;
+            animation:floatPizza 0.9s ease-out forwards; display:flex; align-items:center; justify-content:center;
+            width:60px; height:60px;
+        }
+        .pizza-float .number { font-size:1.2rem; font-weight:900; color:#fff; text-shadow:0 0 10px #000; z-index:2; }
+        @keyframes floatPizza { 0%{opacity:1;transform:translateY(0) scale(0.6);} 100%{opacity:0;transform:translateY(-140px) scale(1.2);} }
+
+        .particle {
+            position:fixed; pointer-events:none; font-size:1.4rem; z-index:998;
+            animation:particleFly 0.8s ease-out forwards;
+        }
+        @keyframes particleFly { 0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg);} 100%{opacity:0;transform:translate(var(--tx), var(--ty)) scale(0) rotate(720deg);} }
+
+        .confetti {
+            position:fixed; pointer-events:none; z-index:1001;
+            animation:confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { opacity:1; transform:translateY(0) rotate(0deg); }
+            100% { opacity:0; transform:translateY(100vh) rotate(720deg); }
+        }
+
+        .final-choice-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.7);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            z-index:1002; color:#fff; text-align:center;
+            animation:fadeIn 0.5s ease;
+        }
+        .final-choice-overlay h2 {
+            font-size:2.5rem; text-shadow:0 0 30px #facc15,0 0 60px #f59e0b;
+            margin-bottom:10px;
+        }
+        .final-choice-overlay p {
+            font-size:1.2rem; opacity:0.9;
+            margin-bottom:30px;
+        }
+        .choice-buttons {
+            display:flex; gap:30px;
+        }
+        .choice-btn {
+            background:linear-gradient(135deg,#facc15,#f59e0b);
+            border:none; border-radius:60px; padding:15px 40px;
+            font-size:1.5rem; font-weight:900; color:#1a0b2e;
+            box-shadow:0 4px 0 #b45309,0 0 30px #facc1566;
+            cursor:pointer; transition:0.1s;
+            touch-action:manipulation;
+            border:1px solid #ffe484;
+        }
+        .choice-btn:active { transform:translateY(4px); box-shadow:0 0px 0 #b45309; }
+        .choice-btn.eat { background:linear-gradient(135deg,#4ade80,#22c55e); box-shadow:0 4px 0 #15803d; }
+        .choice-btn.trash { background:linear-gradient(135deg,#f87171,#ef4444); box-shadow:0 4px 0 #b91c1c; color:#fff; }
+
+        .final-result-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.8);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            z-index:1003; color:#fff; text-align:center;
+            animation:fadeIn 0.5s ease;
+        }
+        .final-result-overlay h2 {
+            font-size:3rem; text-shadow:0 0 30px #facc15,0 0 60px #f59e0b;
+        }
+        .final-result-overlay .emoji-big {
+            font-size:6rem; margin:20px 0;
+        }
+        .final-result-overlay .sub {
+            font-size:1.4rem; opacity:0.9;
+        }
+        .final-result-overlay .restart-btn {
+            margin-top:30px; background:#facc15; border:none; border-radius:40px;
+            padding:12px 30px; font-size:1.2rem; font-weight:900; color:#1a0b2e;
+            cursor:pointer; box-shadow:0 4px 0 #b45309; transition:0.1s;
+        }
+        .final-result-overlay .restart-btn:active { transform:translateY(4px); box-shadow:0 0px 0 #b45309; }
+
+        @keyframes fadeIn { 0%{opacity:0;transform:scale(0.9);} 100%{opacity:1;transform:scale(1);} }
+
+        @media (max-width:480px) {
+            .game { padding:16px 12px 24px; }
+            .pizza-wrapper { width:170px; height:170px; }
+            .score { font-size:2.8rem; }
+            .upgrades { max-height:160px; }
+            .upgrade-pizza-btn { font-size:0.9rem; padding:8px 16px; }
+            .choice-btn { font-size:1.2rem; padding:12px 25px; }
+            .final-choice-overlay h2 { font-size:2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars" id="starsContainer"></div>
+
+    <div class="game" id="gameContainer">
+        <h1 id="title">🍕 КИБЕРПИЦЦА</h1>
+        <div class="score-box">
+            <div class="score" id="scoreDisplay">0</div>
+        </div>
+
+        <div>
+            <button class="upgrade-pizza-btn" id="upgradePizzaBtn">
+                🍕 Улучшить пиццу <span id="nextSkinCost">(100)</span>
+            </button>
+        </div>
+
+        <div class="pizza-wrapper" id="pizzaWrapper">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" id="pizzaSvg">
+                <g id="pizzaGroup"></g>
+            </svg>
+        </div>
+
+        <div class="stats">
+            <div>💰 клик <span id="perClick">1</span></div>
+            <div>⚡ авто <span id="autoPerSec">0</span>/с</div>
+            <div>🔥 комбо <span id="comboDisplay">0</span></div>
+        </div>
+
+        <div class="upgrades" id="upgradesContainer"></div>
+
+        <button class="reset-btn" id="resetBtn">🗑️ Сброс</button>
+    </div>
+
+    <script>
+        (function() {
+            // ====== СОСТОЯНИЕ ======
+            let state = {
+                score: 50,
+                clickPower: 1,
+                autoPower: 0,
+                autoclickLevel: 0,
+                clickLevel: 0,
+                clickCost: 15,
+                autoCost: 40,
+                totalClicks: 0,
+                combo: 0,
+                lastTapTime: 0,
+                multiplier: 1,
+                multiplierEnd: 0,
+                autoDisabled: false,
+                comboBonusMultiplier: 1.0,
+                bonusChance: 0.04,
+                bonusDuration: 4000,
+                autoMaintenanceCost: 0.5,
+                extraClickPower: 0,
+                extraAutoPower: 0,
+                skinIndex: 0,
+                skinCost: 100,
+                finalUnlocked: false,
+                finalChoiceDone: false,
+                memeTouchCount: 0,        // счётчик касаний мемной пиццы
+            };
+
+            // ====== АВТО-ТАП ДЛЯ МЕМНОЙ ПИЦЦЫ ======
+            let autoTapInterval = null;
+
+            function startAutoTap() {
+                if (autoTapInterval) return;
+                const wrapper = document.getElementById('pizzaWrapper');
+                wrapper.classList.add('auto-tap');
+                autoTapInterval = setInterval(() => {
+                    const rect = wrapper.getBoundingClientRect();
+                    // вызываем handleTap с isAuto = true
+                    handleTap({ clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, preventDefault: () => {} }, true);
+                }, 150);
+            }
+
+            function stopAutoTap() {
+                if (autoTapInterval) {
+                    clearInterval(autoTapInterval);
+                    autoTapInterval = null;
+                    document.getElementById('pizzaWrapper').classList.remove('auto-tap');
+                }
+            }
+
+            // ====== ОПРЕДЕЛЕНИЕ СКИНОВ ======
+            const skins = [
+                { name: 'Классическая', emoji: '🍕' },
+                { name: 'Золотая', emoji: '✨' },
+                { name: 'Неоновая', emoji: '💜' },
+                { name: 'Акула', emoji: '🦈' },
+                { name: 'Брейнрот', emoji: '🧠' },
+                { name: 'Космическая', emoji: '🌌' },
+                { name: 'Мем: не трогай', emoji: '✋' },
+                { name: 'Адская', emoji: '🔥' },
+                { name: '🌟 Абсолют', emoji: '🏆' },
+            ];
+
+            // ====== ПОЛНЫЙ РЕНДЕРИНГ ПИЦЦЫ ======
+            function renderPizza(skinIndex) {
+                const group = document.getElementById('pizzaGroup');
+                const svg = document.getElementById('pizzaSvg');
+                group.innerHTML = '';
+
+                // ---- Базовые элементы ----
+                const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                shadow.setAttribute('cx', '100');
+                shadow.setAttribute('cy', '185');
+                shadow.setAttribute('rx', '80');
+                shadow.setAttribute('ry', '12');
+                shadow.setAttribute('fill', '#00000055');
+                group.appendChild(shadow);
+
+                const base = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                base.setAttribute('cx', '100');
+                base.setAttribute('cy', '100');
+                base.setAttribute('r', '90');
+                base.setAttribute('fill', '#d4893b');
+                base.setAttribute('stroke', '#b36b2a');
+                base.setAttribute('stroke-width', '4');
+                group.appendChild(base);
+
+                const crust = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                crust.setAttribute('cx', '100');
+                crust.setAttribute('cy', '100');
+                crust.setAttribute('r', '90');
+                crust.setAttribute('fill', 'none');
+                crust.setAttribute('stroke', '#f7d44a');
+                crust.setAttribute('stroke-width', '12');
+                crust.setAttribute('opacity', '0.6');
+                group.appendChild(crust);
+
+                const cheese = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                cheese.setAttribute('cx', '100');
+                cheese.setAttribute('cy', '100');
+                cheese.setAttribute('r', '78');
+                cheese.setAttribute('fill', '#f7d44a');
+                group.appendChild(cheese);
+
+                const sauce = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                sauce.setAttribute('cx', '100');
+                sauce.setAttribute('cy', '100');
+                sauce.setAttribute('r', '70');
+                sauce.setAttribute('fill', '#c0392b');
+                sauce.setAttribute('opacity', '0.3');
+                group.appendChild(sauce);
+
+                const spots = [[60,70,20],[130,120,18],[80,140,22]];
+                spots.forEach(([cx,cy,r]) => {
+                    const spot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    spot.setAttribute('cx', cx);
+                    spot.setAttribute('cy', cy);
+                    spot.setAttribute('r', r);
+                    spot.setAttribute('fill', '#f1c40f');
+                    spot.setAttribute('opacity', '0.25');
+                    group.appendChild(spot);
+                });
+
+                const pepData = [[70,60,16],[130,70,18],[90,120,14],[140,130,15],[50,120,12],[110,50,13]];
+                pepData.forEach(([cx,cy,r]) => {
+                    const pep = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    pep.setAttribute('cx', cx);
+                    pep.setAttribute('cy', cy);
+                    pep.setAttribute('r', r);
+                    pep.setAttribute('fill', '#b03a2e');
+                    pep.setAttribute('stroke', '#8e2a1f');
+                    pep.setAttribute('stroke-width', '2');
+                    group.appendChild(pep);
+                });
+
+                const oliveData = [[80,80,8],[120,100,7],[60,150,9]];
+                oliveData.forEach(([cx,cy,r]) => {
+                    const ol = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    ol.setAttribute('cx', cx);
+                    ol.setAttribute('cy', cy);
+                    ol.setAttribute('r', r);
+                    ol.setAttribute('fill', '#3d7e3d');
+                    ol.setAttribute('stroke', '#2a5e2a');
+                    ol.setAttribute('stroke-width', '1.5');
+                    group.appendChild(ol);
+                });
+
+                const highlight = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                highlight.setAttribute('cx', '70');
+                highlight.setAttribute('cy', '60');
+                highlight.setAttribute('rx', '30');
+                highlight.setAttribute('ry', '15');
+                highlight.setAttribute('fill', 'white');
+                highlight.setAttribute('opacity', '0.08');
+                highlight.setAttribute('transform', 'rotate(-30 70 60)');
+                group.appendChild(highlight);
+
+                function addText(x, y, text, fontSize = 16, color = '#000', bold = true) {
+                    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    t.setAttribute('x', x);
+                    t.setAttribute('y', y);
+                    t.setAttribute('font-size', fontSize);
+                    t.setAttribute('text-anchor', 'middle');
+                    t.setAttribute('dominant-baseline', 'central');
+                    t.setAttribute('fill', color);
+                    if (bold) t.setAttribute('font-weight', 'bold');
+                    t.textContent = text;
+                    group.appendChild(t);
+                }
+
+                function addEmoji(x, y, emoji, size = 30) {
+                    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    t.setAttribute('x', x);
+                    t.setAttribute('y', y);
+                    t.setAttribute('font-size', size);
+                    t.setAttribute('text-anchor', 'middle');
+                    t.setAttribute('dominant-baseline', 'central');
+                    t.textContent = emoji;
+                    group.appendChild(t);
+                }
+
+                // ---- Специфика скинов ----
+                switch(skinIndex) {
+                    case 0: break;
+                    case 1: {
+                        const goldRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        goldRing.setAttribute('cx', '100');
+                        goldRing.setAttribute('cy', '100');
+                        goldRing.setAttribute('r', '92');
+                        goldRing.setAttribute('fill', 'none');
+                        goldRing.setAttribute('stroke', '#facc15');
+                        goldRing.setAttribute('stroke-width', '6');
+                        goldRing.setAttribute('opacity', '0.9');
+                        group.appendChild(goldRing);
+                        for (let i=0; i<8; i++) {
+                            const angle = i * Math.PI/4;
+                            const x = 100 + 85 * Math.cos(angle);
+                            const y = 100 + 85 * Math.sin(angle);
+                            const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            star.setAttribute('cx', x);
+                            star.setAttribute('cy', y);
+                            star.setAttribute('r', '4');
+                            star.setAttribute('fill', '#ffe484');
+                            star.setAttribute('opacity', '0.7');
+                            group.appendChild(star);
+                        }
+                        break;
+                    }
+                    case 2: {
+                        const neon1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        neon1.setAttribute('cx', '100');
+                        neon1.setAttribute('cy', '100');
+                        neon1.setAttribute('r', '96');
+                        neon1.setAttribute('fill', 'none');
+                        neon1.setAttribute('stroke', '#a855f7');
+                        neon1.setAttribute('stroke-width', '4');
+                        neon1.setAttribute('opacity', '0.6');
+                        group.appendChild(neon1);
+                        const neon2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        neon2.setAttribute('cx', '100');
+                        neon2.setAttribute('cy', '100');
+                        neon2.setAttribute('r', '88');
+                        neon2.setAttribute('fill', 'none');
+                        neon2.setAttribute('stroke', '#7c3aed');
+                        neon2.setAttribute('stroke-width', '2');
+                        neon2.setAttribute('opacity', '0.4');
+                        group.appendChild(neon2);
+                        break;
+                    }
+                    case 3: {
+                        addEmoji(100, 100, '🦈', 70);
+                        for (let i=0; i<5; i++) {
+                            const wave = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            const x = 40 + i*30;
+                            wave.setAttribute('d', `M ${x} 140 Q ${x+15} 130 ${x+30} 140`);
+                            wave.setAttribute('stroke', '#4fc3f7');
+                            wave.setAttribute('fill', 'none');
+                            wave.setAttribute('stroke-width', '3');
+                            wave.setAttribute('opacity', '0.5');
+                            group.appendChild(wave);
+                        }
+                        break;
+                    }
+                    case 4: {
+                        addEmoji(100, 100, '🧠', 80);
+                        for (let i=0; i<6; i++) {
+                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            const angle = i * 60;
+                            const x1 = 100 + 30 * Math.cos(angle * Math.PI/180);
+                            const y1 = 100 + 30 * Math.sin(angle * Math.PI/180);
+                            const x2 = 100 + 60 * Math.cos((angle+20) * Math.PI/180);
+                            const y2 = 100 + 60 * Math.sin((angle+20) * Math.PI/180);
+                            line.setAttribute('d', `M ${x1} ${y1} Q ${x2} ${y2} ${x2+10} ${y2+10}`);
+                            line.setAttribute('stroke', '#ff6b9d');
+                            line.setAttribute('fill', 'none');
+                            line.setAttribute('stroke-width', '2');
+                            line.setAttribute('opacity', '0.4');
+                            group.appendChild(line);
+                        }
+                        break;
+                    }
+                    case 5: {
+                        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                        const grad = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+                        grad.setAttribute('id', 'galaxyGrad');
+                        grad.setAttribute('cx', '50%');
+                        grad.setAttribute('cy', '50%');
+                        grad.setAttribute('r', '50%');
+                        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                        stop1.setAttribute('offset', '0%');
+                        stop1.setAttribute('style', 'stop-color:#4f46e5;stop-opacity:1');
+                        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                        stop2.setAttribute('offset', '100%');
+                        stop2.setAttribute('style', 'stop-color:#8b5cf6;stop-opacity:1');
+                        grad.appendChild(stop1);
+                        grad.appendChild(stop2);
+                        defs.appendChild(grad);
+                        svg.appendChild(defs);
+
+                        const galaxy = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        galaxy.setAttribute('cx', '100');
+                        galaxy.setAttribute('cy', '100');
+                        galaxy.setAttribute('r', '70');
+                        galaxy.setAttribute('fill', 'url(#galaxyGrad)');
+                        galaxy.setAttribute('opacity', '0.5');
+                        group.appendChild(galaxy);
+                        for (let i=0; i<20; i++) {
+                            const x = 30 + Math.random()*140;
+                            const y = 30 + Math.random()*140;
+                            const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            star.setAttribute('cx', x);
+                            star.setAttribute('cy', y);
+                            star.setAttribute('r', 1+Math.random()*3);
+                            star.setAttribute('fill', '#fff');
+                            star.setAttribute('opacity', 0.3+Math.random()*0.7);
+                            group.appendChild(star);
+                        }
+                        addEmoji(100, 80, '🌙', 25);
+                        addEmoji(130, 130, '🪐', 20);
+                        break;
+                    }
+                    case 6: { // МЕМ
+                        const bubble = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        bubble.setAttribute('x', '30');
+                        bubble.setAttribute('y', '40');
+                        bubble.setAttribute('width', '140');
+                        bubble.setAttribute('height', '70');
+                        bubble.setAttribute('rx', '15');
+                        bubble.setAttribute('fill', 'white');
+                        bubble.setAttribute('stroke', '#333');
+                        bubble.setAttribute('stroke-width', '2');
+                        group.appendChild(bubble);
+                        addText(100, 60, 'НЕ ТРОГАЙ!', 18, '#d32f2f', true);
+                        addText(100, 88, 'Я САМ!', 18, '#1976d2', true);
+                        addEmoji(50, 140, '✋', 35);
+                        addEmoji(150, 140, '✋', 35);
+                        addEmoji(50, 60, '✋', 30);
+                        addEmoji(150, 60, '✋', 30);
+                        break;
+                    }
+                    case 7: {
+                        addEmoji(100, 100, '🔥', 80);
+                        for (let i=0; i<8; i++) {
+                            const angle = i * 45;
+                            const x = 100 + 50 * Math.cos(angle * Math.PI/180);
+                            const y = 100 + 50 * Math.sin(angle * Math.PI/180);
+                            const flame = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            flame.setAttribute('d', `M ${x} ${y} Q ${x+15} ${y-30} ${x+30} ${y}`);
+                            flame.setAttribute('stroke', '#ff6b00');
+                            flame.setAttribute('fill', 'none');
+                            flame.setAttribute('stroke-width', '4');
+                            flame.setAttribute('opacity', '0.6');
+                            group.appendChild(flame);
+                        }
+                        break;
+                    }
+                    case 8: {
+                        const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        glow.setAttribute('cx', '100');
+                        glow.setAttribute('cy', '100');
+                        glow.setAttribute('r', '95');
+                        glow.setAttribute('fill', 'none');
+                        glow.setAttribute('stroke', '#ffffff');
+                        glow.setAttribute('stroke-width', '8');
+                        glow.setAttribute('opacity', '0.8');
+                        group.appendChild(glow);
+                        const innerGlow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        innerGlow.setAttribute('cx', '100');
+                        innerGlow.setAttribute('cy', '100');
+                        innerGlow.setAttribute('r', '85');
+                        innerGlow.setAttribute('fill', 'none');
+                        innerGlow.setAttribute('stroke', '#facc15');
+                        innerGlow.setAttribute('stroke-width', '4');
+                        innerGlow.setAttribute('opacity', '0.6');
+                        group.appendChild(innerGlow);
+                        for (let i=0; i<12; i++) {
+                            const angle = i * Math.PI/6;
+                            const x = 100 + 80 * Math.cos(angle);
+                            const y = 100 + 80 * Math.sin(angle);
+                            const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            star.setAttribute('cx', x);
+                            star.setAttribute('cy', y);
+                            star.setAttribute('r', '5');
+                            star.setAttribute('fill', '#ffe484');
+                            star.setAttribute('opacity', '0.9');
+                            group.appendChild(star);
+                        }
+                        addText(100, 100, '🏆 ПОБЕДА 🏆', 20, '#facc15', true);
+                        const sparkle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        sparkle.setAttribute('cx', '70');
+                        sparkle.setAttribute('cy', '50');
+                        sparkle.setAttribute('r', '4');
+                        sparkle.setAttribute('fill', 'white');
+                        sparkle.setAttribute('opacity', '0.6');
+                        group.appendChild(sparkle);
+                        break;
+                    }
+                    default: break;
+                }
+
+                // Обновляем класс анимации
+                const wrapper = document.getElementById('pizzaWrapper');
+                wrapper.className = 'pizza-wrapper';
+                if (skinIndex === 8) {
+                    wrapper.classList.add('final-skin');
+                } else if (skinIndex >= 3) {
+                    wrapper.classList.add('level-3');
+                } else if (skinIndex >= 1) {
+                    wrapper.classList.add('level-1');
+                }
+                // Управление авто-тапом и сброс счётчика касаний
+                if (skinIndex === 6 && !state.finalChoiceDone) {
+                    startAutoTap();
+                    state.memeTouchCount = 0; // сбрасываем при активации мема
+                } else {
+                    stopAutoTap();
+                }
+            }
+
+            // ====== ОСТАЛЬНОЙ КОД (звук, тап, улучшения, авто) ======
+
+            let audioCtx = null;
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            function playClickSound() {
+                try {
+                    if (!audioCtx) initAudio();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.value = 600 + Math.random() * 500;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.06);
+                } catch(e) {}
+            }
+            function vibrate() { if (navigator.vibrate) navigator.vibrate(8); }
+
+            function spawnPizzaNumber(x, y, number, color = '#facc15') {
+                const el = document.createElement('div');
+                el.className = 'pizza-float';
+                el.style.left = (x - 30) + 'px';
+                el.style.top = (y - 30) + 'px';
+                el.innerHTML = `🍕<span class="number" style="color:${color};">+${number}</span>`;
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 950);
+            }
+
+            function spawnParticles(x, y, count = 6) {
+                const emojis = ['💜','🌀','⭐','🔥','🍕'];
+                for (let i=0; i<count; i++) {
+                    const el = document.createElement('div');
+                    el.className = 'particle';
+                    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+                    const angle = Math.random()*2*Math.PI;
+                    const dist = 50 + Math.random()*70;
+                    el.style.setProperty('--tx', Math.cos(angle)*dist + 'px');
+                    el.style.setProperty('--ty', Math.sin(angle)*dist - 50 + 'px');
+                    el.style.left = (x-20+Math.random()*40)+'px';
+                    el.style.top = (y-20+Math.random()*40)+'px';
+                    el.style.fontSize = (1+Math.random()*1.2)+'rem';
+                    document.body.appendChild(el);
+                    setTimeout(()=>el.remove(), 800);
+                }
+            }
+
+            let toastTimer = null;
+            function showToast(message, duration = 2000) {
+                const old = document.querySelector('.toast');
+                if (old) { old.classList.add('hide'); setTimeout(()=>old.remove(), 400); }
+                const t = document.createElement('div');
+                t.className = 'toast';
+                t.textContent = message;
+                document.body.appendChild(t);
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(()=>{ t.classList.add('hide'); setTimeout(()=>t.remove(),400); }, duration);
+            }
+
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const pizzaWrapper = document.getElementById('pizzaWrapper');
+            const perClickSpan = document.getElementById('perClick');
+            const autoPerSecSpan = document.getElementById('autoPerSec');
+            const comboDisplay = document.getElementById('comboDisplay');
+            const upgradesContainer = document.getElementById('upgradesContainer');
+            const resetBtn = document.getElementById('resetBtn');
+
+            function updateUI() {
+                scoreDisplay.textContent = Math.floor(state.score);
+                let effectiveClick = state.clickPower + state.extraClickPower;
+                if (state.multiplier > 1 && Date.now() < state.multiplierEnd) {
+                    effectiveClick *= state.multiplier;
+                }
+                perClickSpan.textContent = effectiveClick;
+                autoPerSecSpan.textContent = state.autoDisabled ? 0 : (state.autoPower + state.extraAutoPower);
+                comboDisplay.textContent = state.combo;
+                renderUpgrades();
+                updatePizzaButton();
+                saveState();
+                if (state.autoDisabled) {
+                    autoPerSecSpan.style.color = '#f87171';
+                } else {
+                    autoPerSecSpan.style.color = '#a78bfa';
+                }
+                checkFinal();
+            }
+
+            function updatePizzaButton() {
+                const btn = document.getElementById('upgradePizzaBtn');
+                const costSpan = document.getElementById('nextSkinCost');
+                const nextIndex = state.skinIndex + 1;
+                if (state.finalUnlocked || state.finalChoiceDone) {
+                    costSpan.textContent = '(🏆 ВСЁ!)';
+                    btn.disabled = true;
+                    btn.textContent = '🏆 АБСОЛЮТ';
+                    return;
+                }
+                if (nextIndex < skins.length) {
+                    costSpan.textContent = `(${Math.floor(state.skinCost)})`;
+                    btn.disabled = state.score < state.skinCost;
+                } else {
+                    costSpan.textContent = '(МАКС)';
+                    btn.disabled = true;
+                }
+            }
+
+            function upgradePizza() {
+                const nextIndex = state.skinIndex + 1;
+                if (nextIndex >= skins.length) {
+                    showToast('✨ Все скины уже твои!', 1500);
+                    return;
+                }
+                if (state.score < state.skinCost) {
+                    showToast('💰 Не хватает очков!', 1000);
+                    return;
+                }
+                state.score -= state.skinCost;
+                state.skinIndex = nextIndex;
+                state.skinCost = Math.floor(state.skinCost * 2.2);
+                renderPizza(state.skinIndex);
+                updateUI();
+                showToast(`🍕 ${skins[nextIndex].name} пицца активирована!`, 2000);
+                const wrapper = document.getElementById('pizzaWrapper');
+                wrapper.style.transform = 'scale(1.3)';
+                setTimeout(() => wrapper.style.transform = '', 300);
+                if (nextIndex === 7) {
+                    state.skinIndex = 8;
+                    state.skinCost = Infinity;
+                    renderPizza(8);
+                    updateUI();
+                    showToast('🌟 ФИНАЛЬНЫЙ СКИН «АБСОЛЮТ» ОТКРЫТ!', 3000);
+                }
+            }
+
+            // ====== ОБРАБОТКА ТАПА (с флагом isAuto) ======
+            function handleTap(e, isAuto = false) {
+                e.preventDefault?.();
+                initAudio();
+                const rect = pizzaWrapper.getBoundingClientRect();
+                let cx = e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width/2;
+                let cy = e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height/2;
+
+                // ---- Штрафы за ручное касание мемной пиццы ----
+                if (!isAuto && state.skinIndex === 6) {
+                    state.memeTouchCount++;
+                    let penalty = 0;
+                    if (state.memeTouchCount === 1) {
+                        penalty = 2000;
+                        showToast('💥 ШТРАФ 2000! Не трогай мемную пиццу!', 1500);
+                    } else if (state.memeTouchCount === 5) {
+                        penalty = 10000;
+                        showToast('💀 ШТРАФ 10000! Ты всё испортил!', 2000);
+                    }
+                    if (penalty > 0) {
+                        state.score = Math.max(0, state.score - penalty);
+                        spawnParticles(cx, cy, 15);
+                        // обновить счёт сразу
+                        scoreDisplay.textContent = Math.floor(state.score);
+                        // также можно показать всплывающее число со штрафом
+                        const el = document.createElement('div');
+                        el.className = 'pizza-float';
+                        el.style.left = (cx - 30) + 'px';
+                        el.style.top = (cy - 50) + 'px';
+                        el.style.color = '#ff4444';
+                        el.innerHTML = `💀 -${penalty}`;
+                        document.body.appendChild(el);
+                        setTimeout(() => el.remove(), 950);
+                        // не даём дальше обрабатывать тап как обычный клик
+                        // можно просто выйти, чтобы штраф не суммировался с доходом
+                        // но мы не выходим, чтобы комбо и прочее не сбивались, но штраф уже применён
+                    }
+                }
+
+                // ---- Основная логика начисления очков (для всех, включая авто) ----
+                playClickSound();
+                vibrate();
+
+                const now = Date.now();
+                const interval = now - state.lastTapTime;
+                state.lastTapTime = now;
+
+                if (interval < 500) {
+                    state.combo += 1;
+                } else {
+                    state.combo = 1;
+                }
+                if (state.combo > 30) state.combo = 30;
+
+                let comboBonus = 1 + Math.floor(state.combo / 8) * 0.15 * state.comboBonusMultiplier;
+                if (comboBonus > 2.5 * state.comboBonusMultiplier) comboBonus = 2.5 * state.comboBonusMultiplier;
+
+                let addScore = state.clickPower + state.extraClickPower;
+                if (state.multiplier > 1 && now < state.multiplierEnd) {
+                    addScore *= state.multiplier;
+                }
+                addScore = Math.floor(addScore * comboBonus);
+                state.score += addScore;
+                state.totalClicks += 1;
+
+                scoreDisplay.classList.remove('pop');
+                void scoreDisplay.offsetWidth;
+                scoreDisplay.classList.add('pop');
+
+                // Визуалы (если это не авто-тап, чтобы не засорять)
+                if (!isAuto) {
+                    spawnPizzaNumber(cx, cy - 20, addScore);
+                    spawnParticles(cx, cy, 4 + Math.min(state.combo, 6));
+                }
+
+                if (Math.random() < state.bonusChance) {
+                    const bonus = Math.random() < 0.5 ? 2 : 4;
+                    state.multiplier = bonus;
+                    state.multiplierEnd = now + state.bonusDuration;
+                    showToast(`✨ x${bonus} на ${state.bonusDuration/1000} сек!`, 2000);
+                }
+
+                updateUI();
+            }
+
+            // Апгрейды
+            const upgradeDefs = [
+                {
+                    id:'click', name:'💪 Сила клика', desc:'+1 за тап',
+                    getCost: s=>s.clickCost,
+                    action: s=>{ s.clickPower+=1; s.clickCost=Math.floor(s.clickCost*1.8); s.clickLevel+=1; }
+                },
+                {
+                    id:'auto', name:'🤖 Автокликер', desc:'+1/сек (обслуживание)',
+                    getCost: s=>s.autoCost,
+                    action: s=>{ s.autoPower+=1; s.autoCost=Math.floor(s.autoCost*2.0); s.autoclickLevel+=1; if(s.autoDisabled){s.autoDisabled=false; showToast('⚡ Автокликер перезапущен!',1500);} }
+                },
+                {
+                    id:'combo', name:'🔥 Комбо-бустер', desc:'Бонус комбо +20%',
+                    getCost: s=>Math.floor(50*(1+s.clickLevel*0.3)),
+                    action: s=>{ s.comboBonusMultiplier+=0.2; }
+                },
+                {
+                    id:'bonus', name:'🍀 Магнит бонусов', desc:'Шанс бонуса +2%, длительность +1с',
+                    getCost: s=>Math.floor(60*(1+s.autoclickLevel*0.3)),
+                    action: s=>{ s.bonusChance+=0.02; s.bonusDuration+=1000; }
+                },
+                {
+                    id:'maintenance', name:'🔧 Эконом-режим', desc:'Обслуживание авто -10%',
+                    getCost: s=>Math.floor(70*(1+s.autoclickLevel*0.25)),
+                    action: s=>{ s.autoMaintenanceCost=Math.max(0.1, s.autoMaintenanceCost-0.1); }
+                },
+                {
+                    id:'extraClick', name:'✨ Неоновая начинка', desc:'+2 к силе клика',
+                    getCost: s=>Math.floor(80*(1+s.clickLevel*0.4)),
+                    action: s=>{ s.extraClickPower+=2; }
+                },
+                {
+                    id:'extraAuto', name:'💎 Бриллиантовый топпинг', desc:'+2 авто-дохода (без обслуживания)',
+                    getCost: s=>Math.floor(100*(1+s.autoclickLevel*0.5)),
+                    action: s=>{ s.extraAutoPower+=2; }
+                }
+            ];
+
+            function renderUpgrades() {
+                let html = '';
+                upgradeDefs.forEach(def=>{
+                    const cost = def.getCost(state);
+                    const canAfford = state.score>=cost;
+                    let level = 0;
+                    if(def.id==='click') level=state.clickLevel;
+                    else if(def.id==='auto') level=state.autoclickLevel;
+                    let displayName = def.name;
+                    if(def.id==='combo') displayName+=` (${Math.round(state.comboBonusMultiplier*100)}%)`;
+                    else if(def.id==='bonus') displayName+=` (${Math.round(state.bonusChance*100)}% / ${state.bonusDuration/1000}с)`;
+                    else if(def.id==='maintenance') displayName+=` (${Math.round(state.autoMaintenanceCost*100)}%)`;
+                    else if(def.id==='extraClick') displayName+=` (+${state.extraClickPower})`;
+                    else if(def.id==='extraAuto') displayName+=` (+${state.extraAutoPower})`;
+                    else if(def.id==='click'||def.id==='auto') displayName+=` (${level})`;
+
+                    html+=`
+                        <div class="upgrade">
+                            <div class="upgrade-info">
+                                <div class="upgrade-name">${displayName}</div>
+                                <div class="upgrade-desc">${def.desc}</div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <div class="upgrade-cost">🪙 ${Math.floor(cost)}</div>
+                                <button class="upgrade-btn" data-id="${def.id}" ${!canAfford?'disabled':''}>КУПИТЬ</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                upgradesContainer.innerHTML = html;
+                document.querySelectorAll('.upgrade-btn').forEach(btn=>{
+                    btn.addEventListener('click', (e)=>{
+                        const id = btn.dataset.id;
+                        const def = upgradeDefs.find(d=>d.id===id);
+                        if(!def) return;
+                        const cost = def.getCost(state);
+                        if(state.score<cost) return;
+                        state.score-=cost;
+                        def.action(state);
+                        updateUI();
+                        btn.style.transform='scale(0.9)';
+                        setTimeout(()=>btn.style.transform='',150);
+                    });
+                });
+            }
+
+            // Автокликер
+            let autoInterval = null;
+            function startAuto() {
+                if(autoInterval) clearInterval(autoInterval);
+                autoInterval = setInterval(()=>{
+                    const totalAuto = state.autoPower + state.extraAutoPower;
+                    if(totalAuto>0) {
+                        const maintenanceCost = Math.ceil(totalAuto * state.autoMaintenanceCost);
+                        if(state.score>=maintenanceCost) {
+                            state.score-=maintenanceCost;
+                            if(state.autoDisabled) {
+                                state.autoDisabled=false;
+                                showToast('⚡ Автокликер снова работает!',1500);
+                            }
+                        } else {
+                            if(!state.autoDisabled) {
+                                state.autoDisabled=true;
+                                showToast('⛔ Автокликер отключен (не хватает на обслуживание)',2500);
+                            }
+                            if(state.score<0) state.score=0;
+                        }
+                    }
+                    if(!state.autoDisabled && totalAuto>0) {
+                        state.score+=totalAuto;
+                        if(Math.random()<0.1) {
+                            const rect = pizzaWrapper.getBoundingClientRect();
+                            spawnPizzaNumber(rect.left+rect.width/2-20+Math.random()*40, rect.top-10, totalAuto, '#60a5fa');
+                        }
+                    }
+                    updateUI();
+                }, 1000);
+            }
+
+            // Звёзды
+            function createStars() {
+                const container = document.getElementById('starsContainer');
+                for(let i=0;i<80;i++) {
+                    const star=document.createElement('div');
+                    star.className='star';
+                    const size=1+Math.random()*2.5;
+                    star.style.width=size+'px';
+                    star.style.height=size+'px';
+                    star.style.left=Math.random()*100+'%';
+                    star.style.top=Math.random()*100+'%';
+                    star.style.setProperty('--dur',(2+Math.random()*3)+'s');
+                    star.style.animationDelay=Math.random()*3+'s';
+                    container.appendChild(star);
+                }
+            }
+            createStars();
+
+            // Сохранение
+            function saveState() {
+                try { localStorage.setItem('tapGameState', JSON.stringify(state)); } catch(e) {}
+            }
+            function loadState() {
+                try {
+                    const raw = localStorage.getItem('tapGameState');
+                    if(raw) {
+                        const parsed = JSON.parse(raw);
+                        Object.keys(state).forEach(k=>{ if(parsed[k]!==undefined) state[k]=parsed[k]; });
+                    }
+                } catch(e) {}
+            }
+
+            // Сброс
+            function resetGame() {
+                if(confirm('Сбросить прогресс?')) {
+                    localStorage.removeItem('tapGameState');
+                    stopAutoTap();
+                    state = {
+                        score:50, clickPower:1, autoPower:0, autoclickLevel:0, clickLevel:0,
+                        clickCost:15, autoCost:40, totalClicks:0, combo:0, lastTapTime:0,
+                        multiplier:1, multiplierEnd:0, autoDisabled:false,
+                        comboBonusMultiplier:1.0, bonusChance:0.04, bonusDuration:4000,
+                        autoMaintenanceCost:0.5, extraClickPower:0, extraAutoPower:0,
+                        skinIndex:0, skinCost:100, finalUnlocked:false, finalChoiceDone:false,
+                        memeTouchCount:0
+                    };
+                    renderPizza(0);
+                    updateUI();
+                    document.body.classList.remove('final');
+                    document.querySelector('.game').classList.remove('final');
+                    document.getElementById('title').classList.remove('final');
+                    document.getElementById('upgradePizzaBtn').classList.remove('final-btn');
+                    showToast('🔄 Прогресс сброшен',1500);
+                }
+            }
+
+            // ====== ФИНАЛЬНЫЙ ВЫБОР ======
+            function showFinalChoice() {
+                if (state.finalChoiceDone) return;
+                stopAutoTap();
+                const old = document.querySelector('.final-choice-overlay');
+                if (old) old.remove();
+
+                const overlay = document.createElement('div');
+                overlay.className = 'final-choice-overlay';
+                overlay.innerHTML = `
+                    <h2>🍕 Ты достиг абсолютной силы!</h2>
+                    <p>Пицца «Абсолют» перед тобой. Что будешь делать?</p>
+                    <div class="choice-buttons">
+                        <button class="choice-btn eat" id="choiceEat">😋 Съесть пиццу</button>
+                        <button class="choice-btn trash" id="choiceTrash">🗑️ Выкинуть в мусорку</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                document.getElementById('choiceEat').addEventListener('click', () => {
+                    overlay.remove();
+                    finalResult('eat');
+                });
+                document.getElementById('choiceTrash').addEventListener('click', () => {
+                    overlay.remove();
+                    finalResult('trash');
+                });
+            }
+
+            function finalResult(choice) {
+                state.finalChoiceDone = true;
+                stopAutoTap();
+                const overlay = document.createElement('div');
+                overlay.className = 'final-result-overlay';
+
+                let title, emoji, subText;
+                if (choice === 'eat') {
+                    title = '🚂 ТЫ СТАЛ АРКАДИЕМ ПАРАВОЗОВЫМ!';
+                    emoji = '🚂👦🚀';
+                    subText = 'Ты съел пиццу и обрёл силу спасать детей! ЧУ-ХУ-ХУ! 🏃‍♂️💨';
+                } else {
+                    title = '🍕 ПИЦЦА СТАЛА АРКАДИЕМ ПАРАВОЗОВЫМ!';
+                    emoji = '🍕🚂👦';
+                    subText = 'Ты выкинул пиццу, но она съела тебя и теперь сама летит спасать детей! ЧУ-ХУ-ХУ! 🚀';
+                }
+
+                overlay.innerHTML = `
+                    <h2>${title}</h2>
+                    <div class="emoji-big">${emoji}</div>
+                    <div class="sub">${subText}</div>
+                    <div style="margin-top:20px; font-size:1.2rem;">🏆 ТЫ (ИЛИ ПИЦЦА) СПАС ВСЕХ ДЕТЕЙ! ИГРА ЗАВЕРШЕНА! 🏆</div>
+                    <button class="restart-btn" id="restartAfterFinal">🔄 Сыграть снова</button>
+                `;
+                document.body.appendChild(overlay);
+
+                for (let i=0; i<120; i++) {
+                    setTimeout(() => {
+                        const conf = document.createElement('div');
+                        conf.className = 'confetti';
+                        const colors = ['#ff0','#f0f','#0ff','#f00','#0f0','#00f','#ffa500','#ff69b4'];
+                        conf.style.left = Math.random()*100 + '%';
+                        conf.style.top = '-10%';
+                        conf.style.fontSize = (10 + Math.random()*20) + 'px';
+                        conf.textContent = ['🚂','👦','🍕','✨','⭐','🎉','🎊','💫'][Math.floor(Math.random()*8)];
+                        conf.style.color = colors[Math.floor(Math.random()*colors.length)];
+                        conf.style.animationDuration = (2 + Math.random()*3) + 's';
+                        conf.style.animationDelay = Math.random()*2 + 's';
+                        document.body.appendChild(conf);
+                        setTimeout(()=>conf.remove(), 5000);
+                    }, i*40);
+                }
+
+                document.getElementById('restartAfterFinal').addEventListener('click', () => {
+                    localStorage.removeItem('tapGameState');
+                    location.reload();
+                });
+            }
+
+            // ====== ПРОВЕРКА ФИНАЛА ======
+            function checkFinal() {
+                if (state.finalChoiceDone) return;
+                const allSkins = state.skinIndex === 8;
+                const allUpgrades = state.clickLevel >= 10 && state.autoclickLevel >= 10 &&
+                                   state.comboBonusMultiplier >= 2.0 &&
+                                   state.bonusChance >= 0.12 &&
+                                   state.autoMaintenanceCost <= 0.1 &&
+                                   state.extraClickPower >= 8 &&
+                                   state.extraAutoPower >= 8;
+                const scoreReq = state.score >= 10000;
+                if (allSkins && allUpgrades && scoreReq && !state.finalUnlocked) {
+                    state.finalUnlocked = true;
+                    showFinalChoice();
+                }
+            }
+
+            // ====== ИНИЦИАЛИЗАЦИЯ ======
+            loadState();
+            renderPizza(state.skinIndex);
+            updateUI();
+            startAuto();
+
+            pizzaWrapper.addEventListener('click', handleTap);
+            pizzaWrapper.addEventListener('touchstart', (e)=>{ e.preventDefault(); handleTap(e); });
+
+            document.getElementById('upgradePizzaBtn').addEventListener('click', upgradePizza);
+
+            document.addEventListener('keydown', (e)=>{
+                if(e.code==='Space') {
+                    e.preventDefault();
+                    const rect = pizzaWrapper.getBoundingClientRect();
+                    handleTap({ clientX: rect.left+rect.width/2, clientY: rect.top+rect.height/2, preventDefault: () => {} });
+                }
+            });
+
+            resetBtn.addEventListener('click', resetGame);
+            window.addEventListener('beforeunload', saveState);
+
+            console.log('🍕 КИБЕРПИЦЦА - МЕМНАЯ ПИЦЦА С ШТРАФАМИ!');
+        })();
+    </script>
+</body>
+</html>
